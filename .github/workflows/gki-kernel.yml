@@ -187,11 +187,15 @@ jobs:
       - name: Delet super_image unsparsed_image from NP3a kernel source
         run: |
           cd "$CONFIG"
-          sed -i '/load(.*kleaf:kernel\.bzl/ s/"super_image",\s*//; s/"unsparsed_image",\s*//' msm-kernel/msm_kernel_la.bzl
+          sed -i '/^load(.*kleaf:kernel\.bzl/ s/"super_image",\?//g; s/"unsparsed_image",\?//g' msm-kernel/msm_kernel_la.bzl
           sed -i '/super_image\s*(/,/^ *).*$/d' msm-kernel/msm_kernel_la.bzl
           sed -i '/unsparsed_image\s*(/,/^ *).*$/d' msm-kernel/msm_kernel_la.bzl
           sed -i '/":.*_super_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
           sed -i '/":.*_unsparsed_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
+          grep unsparsed_image msm-kernel/msm_kernel_la.bzl
+          grep unsparsed_image msm-kernel/msm_kernel_la.bzl
+
+
 
       - name: Delet abi_gki_protected_exports_* from common kernel source
         run: |
@@ -199,6 +203,7 @@ jobs:
           rm -rf ./common/android/abi_gki_protected_exports_aarch64
           rm -rf ./common/android/abi_gki_protected_exports_x86_64
           sed -i '/"protected_exports_list": "android\/abi_gki_protected_exports_aarch64",/d' common/BUILD.bazel
+          grep abi_gki_protected_exports_aarch64 common/BUILD.bazel
 
       - name: Determine the branch for KernelSU
         run: |
