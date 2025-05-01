@@ -181,7 +181,7 @@ jobs:
       - name: Sync NP3a Kernel Source
         run: |
           cd "$CONFIG"
-          git clone --depth=1 https://github.com/NothingOSS/android_kernel_msm-6.1_nothing_sm7635.git -b sm7635/v/mr msm-kernel
+          git clone --depth=1 https://github.com/topsuplove1122/android_kernel_msm-6.1_nothing_sm7635.git -b sm7635/v/mr msm-kernel
           touch build/BUILD
 
       - name: Delet super_image unsparsed_image from NP3a kernel source
