@@ -178,22 +178,26 @@ jobs:
           $REPO --version
           $REPO --trace sync -c -j$(nproc --all) --no-tags --fail-fast
 
-      - name: Copy file
-        if: ${{ inputs.make_release == false }}
+      - name: Sync NP3a Kernel Source
         run: |
-          cp -r $CONFIG source-clean-$CONFIG
+          cd "$CONFIG"
+          git clone --depth=1 https://github.com/NothingOSS/android_kernel_msm-6.1_nothing_sm7635.git -b sm7635/v/mr msm-kernel
+          touch build/BUILD
 
-      - name: Upload artifact
-        if: ${{ inputs.make_release == false }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: source-clean-${{ env.CONFIG }}
-          path: source-clean-${{ env.CONFIG }}
-
-      - name: Remove file
-        if: ${{ inputs.make_release == false }}
+      - name: Delet super_image unsparsed_image from NP3a kernel source
         run: |
-          rm -rf source-clean-$CONFIG
+          cd "$CONFIG"
+          sed -i '/load(.*kleaf:kernel\.bzl/ s/"super_image",\s*//; s/"unsparsed_image",\s*//' msm-kernel/msm_kernel_la.bzl
+          sed -i '/super_image(/,/^    )/d' msm-kernel/msm_kernel_la.bzl
+          sed -i '/unsparsed_image(/,/^    )/d' msm-kernel/msm_kernel_la.bzl
+          sed -i '/":.*_super_image".format(target),/d; /":.*_unsparsed_image".format(target),/d' msm-kernel/msm_kernel_la.bzl
+
+      - name: Delet abi_gki_protected_exports_* from common kernel source
+        run: |
+          cd "$CONFIG"
+          rm -rf ./common/android/abi_gki_protected_exports_aarch64
+          rm -rf ./common/android/abi_gki_protected_exports_x86_64
+          sed -i '/"protected_exports_list": "android\/abi_gki_protected_exports_aarch64",/d' common/BUILD.bazel
 
       - name: Determine the branch for KernelSU
         run: |
@@ -286,40 +290,11 @@ jobs:
       - name: Apply VFS fix changes directly
         run: |
           echo "Changing to configuration directory: $CONFIG..."
-          cd "$CONFIG"
-          sed -i '/bool ksu_vfs_read_hook __read_mostly = true;/d' KernelSU/kernel/ksud.c
-          sed -i '/bool ksu_execveat_hook __read_mostly = true;/d' KernelSU/kernel/ksud.c
-          sed -i '/bool ksu_input_hook __read_mostly = true;/d' KernelSU/kernel/ksud.c
-          sed -i '/#include "selinux\/selinux.h"/a \
-          bool ksu_vfs_read_hook = true;\
-          bool ksu_execveat_hook = true;\
-          bool ksu_input_hook = true;\
-          EXPORT_SYMBOL(ksu_vfs_read_hook);\
-          EXPORT_SYMBOL(ksu_execveat_hook);\
-          EXPORT_SYMBOL(ksu_input_hook);' KernelSU/kernel/ksud.c || true
-          sed -i '/#include <linux\/types.h>/a \
-          extern bool ksu_vfs_read_hook;\
-          extern bool ksu_execveat_hook;\
-          extern bool ksu_input_hook;' KernelSU/kernel/ksud.h || true
-
-      - name: Apply New Hooks Patches
-        run: |
-          echo "Changing to configuration directory: $CONFIG..."
           cd "$CONFIG/common"
-
-          #if [ "${{ inputs.kernelsu_variant }}" == "Official" ]; then
-          #  echo "Applying hooks for Official KernelSU..."
-          #  cp ../../kernel_patches/hooks/ksu_hooks.patch ./
-          #  patch -p1 -F 3 < ksu_hooks.patch
-          if [ "${{ inputs.kernelsu_variant }}" == "Sukisu" ]; then
-            echo "Applying hooks for Sukisu..."
-            cp ../../SukiSU_patch/hooks/new_hooks.patch ./
-            patch -p1 -F 3 < new_hooks.patch
-          #elif [ "${{ inputs.kernelsu_variant }}" == "MKSU" ]; then
-          #  echo "Applying hooks for MKSU..."
-          #  cp ../../kernel_patches/hooks/ksu_hooks.patch ./
-          #  patch -p1 -F 3 < ksu_hooks.patch
-          fi
+          cp ../../SukiSU_patch/hooks/syscall_hooks.patch ./
+          echo "正在打vfs补丁"
+          patch -p1 -F 3 < syscall_hooks.patch
+          echo "vfs_patch完成"
             
       - name: Add SUSFS Configuration Settings
         run: |
@@ -376,28 +351,10 @@ jobs:
           if [ -f "build/build.sh" ]; then
             sed -i 's/-dirty//' ./common/scripts/setlocalversion
           else
-            rm -rf ./common/android/abi_gki_protected_exports_*
             sed -i '/abi_gki_protected_exports_aarch64/d' ./common/BUILD.bazel
             sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
             sed -E -i '/^CONFIG_LOCALVERSION=/ s/(.*)"$/\1-Reeky"/' ./common/arch/arm64/configs/gki_defconfig
           fi
-
-      - name: Copy file
-        if: ${{ inputs.make_release == false }}
-        run: |
-          cp -r $CONFIG source-patched-$CONFIG
-
-      - name: Upload artifact
-        if: ${{ inputs.make_release == false }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: source-patched-${{ env.CONFIG }}
-          path: source-patched-${{ env.CONFIG }}
-
-      - name: Remove file
-        if: ${{ inputs.make_release == false }}
-        run: |
-          rm -rf source-patched-$CONFIG
 
       - name: Build with retry
         uses: nick-fields/retry@v3
@@ -410,38 +367,25 @@ jobs:
             set -x
             cd "$CONFIG"
             echo "Building the kernel..."
-            if [ -f "build/build.sh" ]; then
-              LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh CC="/usr/bin/ccache clang" || exit 1
-            else
-              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --lto=thin //common:kernel_aarch64_dist || exit 1
-            fi
-            ccache --show-stats
+            ./msm-kernel/build_with_bazel.py -t pineapple gki -s abl -s dtc
 
       - name: Patch KPM
         if: ${{ inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
         run: |
-          cd ./$CONFIG/bazel-bin/common/kernel_aarch64/
+          cd ./$CONFIG/out/msm-kernel-pineapple-gki/dist
           curl -LO "https://github.com/topsuplove1122/Build-tool/releases/download/NP3a-boot/patch_linux"
+          curl -LO "https://github.com/topsuplove1122/Build-tool/releases/download/NP3a-boot/magiskboot"
           chmod +x patch_linux
+          chmod +x magiskboot
           ./patch_linux
+          ./magiskboot unpack boot.img
+          rm -rf kernel
+          mv oImage kernel
+          ./magiskboot repack boot.img
+          rm -rf boot.img
+          mv new-boot.img boot.img
           rm -rf Image
-          mv oImage Image
-           
-            
-      - name: Create Bootimgs Folder and Copy Images
-        if: ${{ inputs.android_version == 'android12' || inputs.android_version == 'android13' }}
-        run: |
-          echo "Changing to configuration directory: $CONFIG..."
-          mkdir bootimgs
-
-          echo "Creating bootimgs folder and copying images..."
-          cp ./$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist/Image ./bootimgs
-          cp ./$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist/Image.lz4 ./bootimgs
-          cp ./$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist/Image ./
-          cp ./$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist/Image.lz4 ./
-
-          # Create gzip of the Image file
-          gzip -n -k -f -9 ./Image > ./Image.gz
+          mv kernel Image            
 
       - name: Create Bootimgs Folder and Copy Images
         if: ${{ inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
@@ -450,13 +394,9 @@ jobs:
           mkdir bootimgs
 
           echo "Creating bootimgs folder and copying images..."
-          cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image ./bootimgs
-          cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image.lz4 ./bootimgs
-          cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image ./
-          cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image.lz4 ./
+          cp ./$CONFIG/out/msm-kernel-pineapple-gki/dist/Image ./bootimgs
+          cp ./$CONFIG/out/msm-kernel-pineapple-gki/dist/Image ./
 
-          # Create gzip of the Image file
-          gzip -n -k -f -9 ./Image > ./Image.gz
 
       - name: Create ZIP Files for Different Formats
         run: |
@@ -470,90 +410,16 @@ jobs:
           zip -r "../$ZIP_NAME" ./*
           rm ./Image
 
-          ZIP_NAME="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-AnyKernel3-lz4.zip"
-          echo "Creating zip file: $ZIP_NAME..."
-          mv ../Image.lz4 ./Image.lz4
-          zip -r "../$ZIP_NAME" ./*
-          rm ./Image.lz4
-
-          ZIP_NAME="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-AnyKernel3-gz.zip"
-          echo "Creating zip file: $ZIP_NAME..."
-          mv ../Image.gz ./Image.gz
-          zip -r "../$ZIP_NAME" ./*
-          rm ./Image.gz
-
-      - name: Run Boot Image ${{ inputs.android_version }} Build Script
-        if: ${{ inputs.android_version == 'android12' }}
-        run: |
-          echo "Changing to configuration directory: $CONFIG..."
-          cd bootimgs
-
-          GKI_URL=https://dl.google.com/android/gki/gki-certified-boot-android12-5.10-"${{ inputs.os_patch_level }}"_"${{ inputs.revision }}".zip
-          FALLBACK_URL=https://dl.google.com/android/gki/gki-certified-boot-android12-5.10-2023-01_r1.zip
-
-          # Check if the GKI URL is available
-          echo "Checking if GKI kernel URL is reachable: $GKI_URL"
-          status=$(curl -sL -w "%{http_code}" "$GKI_URL" -o /dev/null)
-
-          if [ "$status" = "200" ]; then
-              echo "[+] Downloading from GKI_URL"
-              curl -Lo gki-kernel.zip "$GKI_URL"
-          else
-              echo "[+] $GKI_URL not found, using $FALLBACK_URL"
-              curl -Lo gki-kernel.zip "$FALLBACK_URL"
-          fi
-
-          # Unzip the downloaded kernel and remove the zip
-          echo "Unzipping the downloaded kernel..."
-          unzip gki-kernel.zip && rm gki-kernel.zip
-
-          echo "Unpacking boot.img..."
-          FULL_PATH=$(pwd)/boot-5.10.img
-          echo "Unpacking using: $FULL_PATH"
-
-          echo "Running unpack_bootimg.py..."
-          $UNPACK_BOOTIMG --boot_img="$FULL_PATH"
-
-          echo "Building Image.gz"
-          gzip -n -k -f -9 ./Image > ./Image.gz
-
-          echo "Building boot.img"
-          $MKBOOTIMG --header_version 4 --kernel Image --output boot.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${{ inputs.os_patch_level }}"
-          $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
-          cp ./boot.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot.img
-
-          echo "Building boot-gz.img"
-          $MKBOOTIMG --header_version 4 --kernel Image.gz --output boot-gz.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${{ inputs.os_patch_level }}"
-          $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
-          cp ./boot-gz.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot-gz.img
-
-          echo "Building boot-lz4.img"
-          $MKBOOTIMG --header_version 4 --kernel Image.lz4 --output boot-lz4.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${{ inputs.os_patch_level }}"
-          $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-lz4.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
-          cp ./boot-lz4.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot-lz4.img
-
       - name: Run Boot Image ${{ inputs.android_version }} Build Script
         if: ${{ inputs.android_version == 'android13' || inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
         run: |
           cd bootimgs
 
-          echo "Building Image.gz"
-          gzip -n -k -f -9 ./Image > ./Image.gz
-
           echo "Building boot.img"
           $MKBOOTIMG --header_version 4 --kernel Image --output boot.img
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
-          cp ./boot.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot.img
+          cp ./boot.img ../NP3a-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot.img
 
-          echo "Building boot-gz.img"
-          $MKBOOTIMG --header_version 4 --kernel Image.gz --output boot-gz.img
-          $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
-          cp ./boot-gz.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot-gz.img
-
-          echo "Building boot-lz4.img"
-          $MKBOOTIMG --header_version 4 --kernel Image.lz4 --output boot-lz4.img
-          $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-lz4.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
-          cp ./boot-lz4.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot-lz4.img
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4

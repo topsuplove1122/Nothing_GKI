@@ -31,8 +31,8 @@ jobs:
   build-kernel-a14-6-1-kernelsu-susfs:
     strategy:
       fail-fast: false
-      # matrix:
-      #   include:
+      matrix:
+        include:
           # - sub_level: "25"
           #   os_patch_level: "2023-10"
           # - sub_level: "43"
@@ -43,8 +43,8 @@ jobs:
           #   os_patch_level: "2024-03"
           # - sub_level: "75"
           #   os_patch_level: "2024-05"
-          # - sub_level: "78"
-          #   os_patch_level: "2024-06"
+          - sub_level: "78"
+            os_patch_level: "2024-06"
           # - sub_level: "84"
           #   os_patch_level: "2024-07"
           # - sub_level: "90"
