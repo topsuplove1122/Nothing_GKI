@@ -192,8 +192,8 @@ jobs:
           sed -i '/unsparsed_image\s*(/,/^ *).*$/d' msm-kernel/msm_kernel_la.bzl
           sed -i '/":.*_super_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
           sed -i '/":.*_unsparsed_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
-          grep unsparsed_image msm-kernel/msm_kernel_la.bzl
-          grep unsparsed_image msm-kernel/msm_kernel_la.bzl
+          grep super_image msm-kernel/msm_kernel_la.bzl || true
+          grep unsparsed_image msm-kernel/msm_kernel_la.bzl || true
 
 
 
@@ -203,7 +203,7 @@ jobs:
           rm -rf ./common/android/abi_gki_protected_exports_aarch64
           rm -rf ./common/android/abi_gki_protected_exports_x86_64
           sed -i '/"protected_exports_list": "android\/abi_gki_protected_exports_aarch64",/d' common/BUILD.bazel
-          grep abi_gki_protected_exports_aarch64 common/BUILD.bazel
+          grep abi_gki_protected_exports_aarch64 common/BUILD.bazel || true
 
       - name: Determine the branch for KernelSU
         run: |
