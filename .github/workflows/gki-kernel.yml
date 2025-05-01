@@ -322,8 +322,8 @@ jobs:
       - name: Patch KPM
         if: ${{ inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
         run: |
+          cp ./SukiSU_patch/kpm/patch_linux ./$CONFIG/out/msm-kernel-pineapple-gki/dist
           cd ./$CONFIG/out/msm-kernel-pineapple-gki/dist
-          curl -LO "https://github.com/topsuplove1122/Build-tool/releases/download/NP3a-boot/patch_linux"
           curl -LO "https://github.com/topsuplove1122/Build-tool/releases/download/NP3a-boot/magiskboot"
           chmod +x patch_linux
           chmod +x magiskboot
