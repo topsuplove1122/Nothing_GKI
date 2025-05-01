@@ -188,9 +188,10 @@ jobs:
         run: |
           cd "$CONFIG"
           sed -i '/load(.*kleaf:kernel\.bzl/ s/"super_image",\s*//; s/"unsparsed_image",\s*//' msm-kernel/msm_kernel_la.bzl
-          sed -i '/super_image(/,/^    )/d' msm-kernel/msm_kernel_la.bzl
-          sed -i '/unsparsed_image(/,/^    )/d' msm-kernel/msm_kernel_la.bzl
-          sed -i '/":.*_super_image".format(target),/d; /":.*_unsparsed_image".format(target),/d' msm-kernel/msm_kernel_la.bzl
+          sed -i '/super_image\s*(/,/^ *).*$/d' msm-kernel/msm_kernel_la.bzl
+          sed -i '/unsparsed_image\s*(/,/^ *).*$/d' msm-kernel/msm_kernel_la.bzl
+          sed -i '/":.*_super_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
+          sed -i '/":.*_unsparsed_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
 
       - name: Delet abi_gki_protected_exports_* from common kernel source
         run: |
