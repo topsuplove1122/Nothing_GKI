@@ -241,15 +241,9 @@ jobs:
         run: |
             CONFIG_FILE="$CONFIG/aosp/arch/arm64/configs/gki_defconfig"
 
-            if [ "${{ inputs.android_version }}" = "android14" ] || [ "${{ inputs.android_version }}" = "android15" ]; then
-              sed -i 's/"drivers\/block\/zram\/zram\.ko",//g; s/"mm\/zsmalloc\.ko",//g' "$CONFIG/aosp/modules.bzl"
-              echo "CONFIG_MODULE_SIG_FORCE=n" >> "$CONFIG_FILE"
-              echo 'Android14_Bazel:已修复zram&zsmalloc'
-            elif [ "${{ inputs.kernel_version }}" = "5.10" ] || [ "${{ inputs.kernel_version }}" = "5.15" ]; then
-              rm "$CONFIG/aosp/android/gki_aarch64_modules"
-              touch "$CONFIG/aosp/android/gki_aarch64_modules"
-              echo '5.10&5.15:已修复zram&zsmalloc'
-            fi
+            sed -i 's/"drivers\/block\/zram\/zram\.ko",//g; s/"mm\/zsmalloc\.ko",//g' "$CONFIG/aosp/modules.bzl"
+            echo "CONFIG_MODULE_SIG_FORCE=n" >> "$CONFIG_FILE"
+            echo 'Android14_Bazel:已修复zram&zsmalloc'
 
              if grep -q "CONFIG_ZSMALLOC=y" "$CONFIG_FILE" && grep -q "CONFIG_ZRAM=y" "$CONFIG_FILE"; then
               echo "CONFIG_CRYPTO_LZ4HC=y" >> "$CONFIG_FILE"
