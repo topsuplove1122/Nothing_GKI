@@ -106,7 +106,7 @@ jobs:
 
           # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
-          $REPO init --depth=1 -u git@github.com:topsuplove1122/oplus_manifest.git -b P9PXL -m A16 --repo-rev=v2.16
+          $REPO init --depth=1 -u https://github.com/topsuplove1122/oplus_manifest.git -b P9PXL -m A16 --repo-rev=v2.16
 
           # Sync repo and apply patches
           $REPO --version
