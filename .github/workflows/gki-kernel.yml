@@ -106,48 +106,19 @@ jobs:
 
           # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
-          FORMATTED_BRANCH="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.os_patch_level }}"
-          $REPO init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-${FORMATTED_BRANCH} --repo-rev=v2.16
-
-          REMOTE_BRANCH=$(git ls-remote https://android.googlesource.com/kernel/common ${FORMATTED_BRANCH})
-          DEFAULT_MANIFEST_PATH=.repo/manifests/default.xml
-
-          # Check if branch is deprecated
-          if grep -q deprecated <<< $REMOTE_BRANCH; then
-            echo "Found deprecated branch: $FORMATTED_BRANCH"
-            sed -i "s/\"${FORMATTED_BRANCH}\"/\"deprecated\/${FORMATTED_BRANCH}\"/g" $DEFAULT_MANIFEST_PATH
-          fi
+          $REPO init --depth=1 -u git@github.com:topsuplove1122/oplus_manifest.git -b P9PXL -m A16 --repo-rev=v2.16
 
           # Sync repo and apply patches
           $REPO --version
           $REPO --trace sync -c -j$(nproc --all) --no-tags --fail-fast
 
-      - name: Sync NP3a Kernel Source
-        run: |
-          cd "$CONFIG"
-          git clone --depth=1 https://github.com/topsuplove1122/android_kernel_msm-6.1_nothing_sm7635.git -b sm7635/v/mr msm-kernel
-          touch build/BUILD
-
-      - name: Delet super_image unsparsed_image from NP3a kernel source
-        run: |
-          cd "$CONFIG"
-          sed -i '/^load(.*kleaf:kernel\.bzl/ s/"super_image",\?//g; s/"unsparsed_image",\?//g' msm-kernel/msm_kernel_la.bzl
-          sed -i '/super_image\s*(/,/^ *).*$/d' msm-kernel/msm_kernel_la.bzl
-          sed -i '/unsparsed_image\s*(/,/^ *).*$/d' msm-kernel/msm_kernel_la.bzl
-          sed -i '/":.*_super_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
-          sed -i '/":.*_unsparsed_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
-          grep super_image msm-kernel/msm_kernel_la.bzl || true
-          grep unsparsed_image msm-kernel/msm_kernel_la.bzl || true
-
-
-
       - name: Delet abi_gki_protected_exports_* from common kernel source
         run: |
           cd "$CONFIG"
-          rm -rf ./common/android/abi_gki_protected_exports_aarch64
-          rm -rf ./common/android/abi_gki_protected_exports_x86_64
-          sed -i '/"protected_exports_list": "android\/abi_gki_protected_exports_aarch64",/d' common/BUILD.bazel
-          grep abi_gki_protected_exports_aarch64 common/BUILD.bazel || true
+          rm -rf ./aosp/android/abi_gki_protected_exports_aarch64
+          rm -rf ./aosp/android/abi_gki_protected_exports_x86_64
+          sed -i '/"protected_exports_list": "android\/abi_gki_protected_exports_aarch64",/d' aosp/BUILD.bazel
+          grep abi_gki_protected_exports_aarch64 aosp/BUILD.bazel || true
 
       - name: Determine the branch for KernelSU
         run: |
@@ -174,6 +145,7 @@ jobs:
             curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash $BRANCH
           elif [ "${{ inputs.kernelsu_variant }}" == "Sukisu" ]; then
             echo "Adding Sukisu..."
+            cd aosp
             curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash $BRANCH
             #curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next-susfs
             cd ./KernelSU
@@ -194,9 +166,9 @@ jobs:
           echo "Applying SUSFS patches..."
           
           # Copy SUSFS patches
-          cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch ./common/
-          cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
-          cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+          cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch ./aosp/
+          cp ../susfs4ksu/kernel_patches/fs/* ./aosp/fs/
+          cp ../susfs4ksu/kernel_patches/include/linux/* ./aosp/include/linux/
 
           # if [ "${{ inputs.kernelsu_variant }}" == "Official" ]; then
           #   echo "Applying SUSFS patches for Official KernelSU..."
@@ -226,13 +198,13 @@ jobs:
           # fi
 
           # Change to common directory and apply common SUSFS patch
-          cd common
+          cd aosp
           patch -p1 < 50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch || true
           
       - name: Apply Hide Stuff Patches
         run: |
           echo "Changing to configuration directory: $CONFIG..."
-          cd "$CONFIG/common"
+          cd "$CONFIG/aosp"
           # Apply additional patch
           cp ../../SukiSU_patch/69_hide_stuff.patch ./
           patch -p1 -F 3 < 69_hide_stuff.patch
@@ -240,7 +212,7 @@ jobs:
       - name: Apply VFS fix changes directly
         run: |
           echo "Changing to configuration directory: $CONFIG..."
-          cd "$CONFIG/common"
+          cd "$CONFIG/aosp"
           cp ../../SukiSU_patch/hooks/syscall_hooks.patch ./
           echo "正在打vfs补丁"
           patch -p1 -F 3 < syscall_hooks.patch
@@ -249,7 +221,7 @@ jobs:
       - name: Add SUSFS Configuration Settings
         run: |
           echo "Changing to configuration directory: $CONFIG..."
-          cd "$CONFIG/common"
+          cd "$CONFIG/aosp"
 
           echo "CONFIG_KSU=y" >> ./arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./arch/arm64/configs/gki_defconfig
@@ -292,18 +264,18 @@ jobs:
           echo "Changing to configuration directory: $CONFIG..."
           cd "$CONFIG"
 
-          sed -i '$s|echo "\$res"|echo "\$res-Reeky"|' ./common/scripts/setlocalversion
+          sed -i '$s|echo "\$res"|echo "\$res-Reeky"|' ./aosp/scripts/setlocalversion
 
           # Run perl command to modify UTS_VERSION
-          perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT Sat Apr 20 04:20:00 UTC 2024"}' ./common/scripts/mkcompile_h
+          perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT Sat Apr 20 04:20:00 UTC 2024"}' ./aosp/scripts/mkcompile_h
           
           echo "Building the kernel..."
           if [ -f "build/build.sh" ]; then
-            sed -i 's/-dirty//' ./common/scripts/setlocalversion
+            sed -i 's/-dirty//' ./aosp/scripts/setlocalversion
           else
-            sed -i '/abi_gki_protected_exports_aarch64/d' ./common/BUILD.bazel
+            sed -i '/abi_gki_protected_exports_aarch64/d' ./aosp/BUILD.bazel
             sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
-            sed -E -i '/^CONFIG_LOCALVERSION=/ s/(.*)"$/\1-Reeky"/' ./common/arch/arm64/configs/gki_defconfig
+            sed -E -i '/^CONFIG_LOCALVERSION=/ s/(.*)"$/\1-Reeky"/' ./aosp/arch/arm64/configs/gki_defconfig
           fi
 
       - name: Build with retry
@@ -317,25 +289,27 @@ jobs:
             set -x
             cd "$CONFIG"
             echo "Building the kernel..."
-            ./msm-kernel/build_with_bazel.py -t pineapple gki -s abl -s dtc --jobs=$(nproc)
+            tools/bazel build --config=fast //aosp:kernel_aarch64_dist
+            find out/ -path "*/bazel-out/*/bin/aosp/kernel_aarch64_gki_artifacts/boot.img" ! -path "*/runfiles/*" -exec cp {} "out/" \;
 
       - name: Patch KPM
         if: ${{ inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
         run: |
-          cp ./SukiSU_patch/kpm/patch_linux ./$CONFIG/out/msm-kernel-pineapple-gki/dist
-          cd ./$CONFIG/out/msm-kernel-pineapple-gki/dist
+          cp ./SukiSU_patch/kpm/patch_linux ./$CONFIG/out/
+          cd ./$CONFIG/out/
           curl -LO "https://github.com/topsuplove1122/Build-tool/releases/download/NP3a-boot/magiskboot"
           chmod +x patch_linux
           chmod +x magiskboot
-          ./patch_linux
           ./magiskboot unpack boot.img
-          rm -rf kernel
+          mv kernel Image
+          ./patch_linux
           mv oImage kernel
           ./magiskboot repack boot.img
           rm -rf boot.img
           mv new-boot.img boot.img
           rm -rf Image
-          mv kernel Image            
+          mv kernel Image       
+          
 
       - name: Create Bootimgs Folder and Copy Images
         if: ${{ inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
@@ -344,8 +318,8 @@ jobs:
           mkdir bootimgs
 
           echo "Creating bootimgs folder and copying images..."
-          cp ./$CONFIG/out/msm-kernel-pineapple-gki/dist/boot.img ./NP3a-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot.img
-          cp ./$CONFIG/out/msm-kernel-pineapple-gki/dist/Image ./
+          cp ./$CONFIG/out/boot.img ./P9PXL-Sukisu($KSU_VERSION)-kpm-susfs-boot.img
+          cp ./$CONFIG/out/Image ./
 
 
       - name: Create ZIP Files for Different Formats
@@ -354,7 +328,7 @@ jobs:
           cd ./AnyKernel3
 
           # Create and upload zip for each format
-          ZIP_NAME="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-AnyKernel3.zip"
+          ZIP_NAME="P9PXL-Sukisu($KSU_VERSION)-kpm-susfs-AnyKernel3.zip"
           echo "Creating zip file: $ZIP_NAME..."
           mv ../Image ./Image
           zip -r "../$ZIP_NAME" ./*
