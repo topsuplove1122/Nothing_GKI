@@ -318,7 +318,7 @@ jobs:
           mkdir bootimgs
 
           echo "Creating bootimgs folder and copying images..."
-          cp ./$CONFIG/out/boot.img ./P9PXL-Sukisu($KSU_VERSION)-kpm-susfs-boot.img
+          cp ./$CONFIG/out/boot.img ./P9PXL-Sukisu_$KSU_VERSION_-kpm-susfs-boot.img
           cp ./$CONFIG/out/Image ./
 
 
