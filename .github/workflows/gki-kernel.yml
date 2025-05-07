@@ -337,7 +337,7 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-${{ env.CONFIG }}
+          name: kernel-P9PXL-Sukisu
           path: |
             *.zip
             *.img
