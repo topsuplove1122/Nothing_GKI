@@ -332,9 +332,7 @@ jobs:
           chmod +x patch_linux
           ./patch_linux
           rm -rf Image
-          mv oImage Image
-          lz4 -l Image Image.lz4
-          mv Image.lz4 kernel
+          mv oImage kernel
           python3 ../tools/mkbootimg/mkbootimg.py $(cat mkbootimg_args) --output boot_patched.img
           mv boot_patched boot.img
           
