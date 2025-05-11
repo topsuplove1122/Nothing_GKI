@@ -315,8 +315,7 @@ jobs:
         run: |
           cd "$CONFIG"
           mkdir unpack_boot
-          find out/ -path "*/bazel-out/*/bin/aosp/kernel_aarch64/Image.lz4" ! -path "*/runfiles/*" -exec cp {} "unpack_boot/" \;
-          mv unpack_boot/Image.lz4 unpack_boot/Image
+          find out/ -path "*/bazel-out/*/bin/aosp/kernel_aarch64/Image" ! -path "*/runfiles/*" -exec cp {} "unpack_boot/" \;
 
           python3 tools/mkbootimg/unpack_bootimg.py \
           --boot_img out/caimito/dist/boot.img \
@@ -332,10 +331,13 @@ jobs:
           rm -rf kernel
           chmod +x patch_linux
           ./patch_linux
-          mv oImage kernel
+          rm -rf Image
+          mv oImage Image
+          lz4 -l Image Image.lz4
+          mv Image.lz4 kernel
           python3 ../tools/mkbootimg/mkbootimg.py $(cat mkbootimg_args) --output boot_patched.img
           mv boot_patched boot.img
-          rm -rf Image
+          
           mv kernel Image       
           
 
