@@ -106,7 +106,7 @@ jobs:
 
           # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
-          $REPO init --depth=1 -u https://github.com/topsuplove1122/oplus_manifest.git -b P9PXL -m A16 --repo-rev=v2.16
+          $REPO init --depth=1 -u https://android.googlesource.com/kernel/manifest -b android-gs-caimito-6.1-android16-beta --repo-rev=v2.16
 
           # Sync repo and apply patches
           $REPO --version
@@ -119,6 +119,8 @@ jobs:
           rm -rf ./aosp/android/abi_gki_protected_exports_x86_64
           sed -i '/"protected_exports_list": "android\/abi_gki_protected_exports_aarch64",/d' aosp/BUILD.bazel
           grep abi_gki_protected_exports_aarch64 aosp/BUILD.bazel || true
+          sed -i 's|base_kernel = "//common:kernel_aarch64"|base_kernel = "//aosp:kernel_aarch64"|' private/devices/google/caimito/BUILD.bazel
+
 
       - name: Determine the branch for KernelSU
         run: |
@@ -306,24 +308,33 @@ jobs:
             set -x
             cd "$CONFIG"
             echo "Building the kernel..."
-            tools/bazel build --config=fast //aosp:kernel_aarch64_dist
-            find out/ -path "*/bazel-out/*/bin/aosp/kernel_aarch64_gki_artifacts/boot.img" ! -path "*/runfiles/*" -exec cp {} "out/" \;
+            ./build_caimito.sh --kernel_package=@//aosp
+            # find out/ -path "*/bazel-out/*/bin/aosp/kernel_aarch64_gki_artifacts/boot.img" ! -path "*/runfiles/*" -exec cp {} "out/" \;
+
+      - name: Copy file
+        run: |
+          cd "$CONFIG"
+          mkdir unpack_boot
+          find out/ -path "*/bazel-out/*/bin/aosp/kernel_aarch64/Image.lz4" ! -path "*/runfiles/*" -exec cp {} "unpack_boot/" \;
+          mv unpack_boot/Image.lz4 unpack_boot/Image
+
+          python3 tools/mkbootimg/unpack_bootimg.py \
+          --boot_img out/caimito/dist/boot.img \
+          --out unpack_boot \
+          --format=mkbootimg \
+          > unpack_boot/mkbootimg_args
 
       - name: Patch KPM
         if: ${{ inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
         run: |
-          cp ./SukiSU_patch/kpm/patch_linux ./$CONFIG/out/
-          cd ./$CONFIG/out/
-          curl -LO "https://github.com/topsuplove1122/Build-tool/releases/download/NP3a-boot/magiskboot"
+          cp ./SukiSU_patch/kpm/patch_linux ./$CONFIG/unpack_boot/
+          cd ./$CONFIG/unpack_boot/
+          rm -rf kernel
           chmod +x patch_linux
-          chmod +x magiskboot
-          ./magiskboot unpack boot.img
-          mv kernel Image
           ./patch_linux
           mv oImage kernel
-          ./magiskboot repack boot.img
-          rm -rf boot.img
-          mv new-boot.img boot.img
+          python3 ../tools/mkbootimg/mkbootimg.py $(cat mkbootimg_args) --output boot_patched.img
+          mv boot_patched boot.img
           rm -rf Image
           mv kernel Image       
           
@@ -335,8 +346,8 @@ jobs:
           mkdir bootimgs
 
           echo "Creating bootimgs folder and copying images..."
-          cp ./$CONFIG/out/boot.img ./P9PXL-Sukisu_$KSU_VERSION_-kpm-susfs-boot.img
-          cp ./$CONFIG/out/Image ./
+          cp ./$CONFIG/unpack_boot/boot.img ./P9PXL-Sukisu_$KSU_VERSION_-kpm-susfs-boot.img
+          cp ./$CONFIG/unpack_boot/Image ./
 
 
       - name: Create ZIP Files for Different Formats
