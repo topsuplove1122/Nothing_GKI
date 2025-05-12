@@ -333,6 +333,7 @@ jobs:
           ./patch_linux
           rm -rf Image
           mv oImage kernel
+          ls
           python3 ../tools/mkbootimg/mkbootimg.py $(cat mkbootimg_args) --output boot_patched.img
           mv boot_patched boot.img
           
