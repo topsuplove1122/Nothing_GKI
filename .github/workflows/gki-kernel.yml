@@ -339,7 +339,7 @@ jobs:
           cd ..
           python3 tools/mkbootimg/mkbootimg.py $(cat unpack_boot/mkbootimg_args) --output unpack_boot/boot_patched.img
           cd unpack_boot
-          mv boot_patched boot.img
+          mv boot_patched.img boot.img
           
           mv kernel Image       
           
