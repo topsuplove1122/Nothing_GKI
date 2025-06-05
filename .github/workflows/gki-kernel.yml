@@ -106,7 +106,7 @@ jobs:
 
           # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
-          $REPO init --depth=1 -u https://android.googlesource.com/kernel/manifest -b android-gs-caimito-6.1-android15-qpr2 --repo-rev=v2.16
+          $REPO init --depth=1 -u https://android.googlesource.com/kernel/manifest -b android-gs-caimito-6.1-android15-qpr2-beta --repo-rev=v2.16
 
           # Sync repo and apply patches
           $REPO --version
