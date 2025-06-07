@@ -106,7 +106,7 @@ jobs:
 
           # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
-          $REPO init --depth=1 -u https://android.googlesource.com/kernel/manifest -b android-gs-caimito-6.1-android16-beta --repo-rev=v2.16
+          $REPO init --depth=1 -u https://android.googlesource.com/kernel/manifest -b android-gs-tegu-6.1-android16-beta --repo-rev=v2.16
 
           # Sync repo and apply patches
           $REPO --version
@@ -119,7 +119,7 @@ jobs:
           rm -rf ./aosp/android/abi_gki_protected_exports_x86_64
           sed -i '/"protected_exports_list": "android\/abi_gki_protected_exports_aarch64",/d' aosp/BUILD.bazel
           grep abi_gki_protected_exports_aarch64 aosp/BUILD.bazel || true
-          sed -i 's|base_kernel = "//common:kernel_aarch64"|base_kernel = "//aosp:kernel_aarch64"|' private/devices/google/caimito/BUILD.bazel
+          sed -i 's|base_kernel = "//common:kernel_aarch64"|base_kernel = "//aosp:kernel_aarch64"|' private/devices/google/tegu/BUILD.bazel
 
 
       - name: Determine the branch for KernelSU
@@ -308,7 +308,7 @@ jobs:
             set -x
             cd "$CONFIG"
             echo "Building the kernel..."
-            ./build_caimito.sh --kernel_package=@//aosp
+            ./build_tegu.sh --kernel_package=@//aosp
             # find out/ -path "*/bazel-out/*/bin/aosp/kernel_aarch64_gki_artifacts/boot.img" ! -path "*/runfiles/*" -exec cp {} "out/" \;
 
       - name: Copy file
@@ -318,7 +318,7 @@ jobs:
           find out/ -path "*/bazel-out/*/bin/aosp/kernel_aarch64/Image" ! -path "*/runfiles/*" -exec cp {} "unpack_boot/" \;
 
           python3 tools/mkbootimg/unpack_bootimg.py \
-          --boot_img out/caimito/dist/boot.img \
+          --boot_img out/tegu/dist/boot.img \
           --out unpack_boot \
           --format=mkbootimg \
           > unpack_boot/mkbootimg_args
