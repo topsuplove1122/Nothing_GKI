@@ -349,7 +349,7 @@ jobs:
           mkdir bootimgs
 
           echo "Creating bootimgs folder and copying images..."
-          cp ./$CONFIG/unpack_boot/boot.img ./P9PXL-Sukisu_$KSU_VERSION_-kpm-susfs-boot.img
+          cp ./$CONFIG/unpack_boot/boot.img ./P9a-Sukisu_$KSU_VERSION-kpm-susfs-boot.img
           cp ./$CONFIG/unpack_boot/Image ./
 
 
@@ -368,7 +368,7 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-P9PXL-Sukisu
+          name: kernel-P9a-Sukisu
           path: |
             *.zip
             *.img
