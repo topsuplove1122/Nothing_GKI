@@ -125,10 +125,10 @@ jobs:
       - name: Sync NP3a Kernel Source
         run: |
           cd "$CONFIG"
-          git clone --depth=1 https://github.com/topsuplove1122/android_kernel_msm-6.1_nothing_sm7635.git -b sm7635/v/mr msm-kernel
+          git clone --depth=1 https://github.com/NothingOSS/android_kernel_msm-6.6_nothing_sm8735.git -b sm8735/v/mr msm-kernel
           touch build/BUILD
 
-      - name: Delet super_image unsparsed_image from NP3a kernel source
+      - name: Delet super_image unsparsed_image from NP3 kernel source
         run: |
           cd "$CONFIG"
           sed -i '/^load(.*kleaf:kernel\.bzl/ s/"super_image",\?//g; s/"unsparsed_image",\?//g' msm-kernel/msm_kernel_la.bzl
@@ -174,11 +174,12 @@ jobs:
             curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash $BRANCH
           elif [ "${{ inputs.kernelsu_variant }}" == "Sukisu" ]; then
             echo "Adding Sukisu..."
-            curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash $BRANCH
+            curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/susfs-main/kernel/setup.sh" -o setup.sh && bash setup.sh susfs-main
+            # curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash $BRANCH
             #curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next-susfs
             cd ./KernelSU
-            KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10606)
-            echo "KSUVER=$KSU_VERSION"  >> $GITHUB_ENV
+            KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 10700)
+            echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
             export KSU_VERSION=$KSU_VERSION
             sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
           elif [ "${{ inputs.kernelsu_variant }}" == "MKSU" ]; then
