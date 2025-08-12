@@ -127,6 +127,8 @@ jobs:
           cd "$CONFIG"
           git clone --depth=1 https://github.com/NothingOSS/android_kernel_msm-6.6_nothing_sm8735.git -b sm8735/v/mr msm-kernel
           touch build/BUILD
+          sed -i '/^[[:space:]]*gki_ramdisk_prebuilt_binary[[:space:]]*=/d' msm-kernel/msm_kernel_la.bzl
+          sed -i '/^[[:space:]]*gki_ramdisk_prebuilt_binary[[:space:]]*=/d' msm-kernel/msm_kernel_16k_la.bzl
 
       - name: Delet super_image unsparsed_image from NP3 kernel source
         run: |
