@@ -130,16 +130,16 @@ jobs:
           sed -i '/^[[:space:]]*gki_ramdisk_prebuilt_binary[[:space:]]*=/d' msm-kernel/msm_kernel_la.bzl
           sed -i '/^[[:space:]]*gki_ramdisk_prebuilt_binary[[:space:]]*=/d' msm-kernel/msm_kernel_16k_la.bzl
 
-      - name: Delet super_image unsparsed_image from NP3 kernel source
-        run: |
-          cd "$CONFIG"
-          sed -i '/^load(.*kleaf:kernel\.bzl/ s/"super_image",\?//g; s/"unsparsed_image",\?//g' msm-kernel/msm_kernel_la.bzl
-          sed -i '/super_image\s*(/,/^ *).*$/d' msm-kernel/msm_kernel_la.bzl
-          sed -i '/unsparsed_image\s*(/,/^ *).*$/d' msm-kernel/msm_kernel_la.bzl
-          sed -i '/":.*_super_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
-          sed -i '/":.*_unsparsed_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
-          grep super_image msm-kernel/msm_kernel_la.bzl || true
-          grep unsparsed_image msm-kernel/msm_kernel_la.bzl || true
+      # - name: Delet super_image unsparsed_image from NP3 kernel source
+      #   run: |
+      #     cd "$CONFIG"
+      #     sed -i '/^load(.*kleaf:kernel\.bzl/ s/"super_image",\?//g; s/"unsparsed_image",\?//g' msm-kernel/msm_kernel_la.bzl
+      #     sed -i '/super_image\s*(/,/^ *).*$/d' msm-kernel/msm_kernel_la.bzl
+      #     sed -i '/unsparsed_image\s*(/,/^ *).*$/d' msm-kernel/msm_kernel_la.bzl
+      #     sed -i '/":.*_super_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
+      #     sed -i '/":.*_unsparsed_image"\.format(target),/d' msm-kernel/msm_kernel_la.bzl
+      #     grep super_image msm-kernel/msm_kernel_la.bzl || true
+      #     grep unsparsed_image msm-kernel/msm_kernel_la.bzl || true
 
 
 
