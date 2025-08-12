@@ -318,7 +318,7 @@ jobs:
             set -x
             cd "$CONFIG"
             echo "Building the kernel..."
-            ./msm-kernel/build_with_bazel.py -t sun gki -s abl -s dtc --jobs=$(nproc)
+            ./msm-kernel/build_with_bazel.py -t sun perf -s abl -s dtc --jobs=$(nproc)
 
       - name: Patch KPM
         if: ${{ inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
