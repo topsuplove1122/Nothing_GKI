@@ -11,7 +11,12 @@ on:
         description: 'Do you want to create a release?'
         required: true
         type: boolean
-        default: true
+        default: false
+      BUILD_TIME:
+        type: string
+        description: "自定义构建时间 (输入F使用当前时间)"
+        required: false
+        default: "F"
       kernelsu_variant:
         description: "Choose KernelSU"
         required: true
