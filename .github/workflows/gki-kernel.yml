@@ -139,7 +139,7 @@ jobs:
       - name: Add KernelSU
         run: |
           echo "Changing to configuration directory: $CONFIG..."
-          cd "$CONFIG"
+          cd "$CONFIG/aosp"
 
           META="susfs-main/Reeky"
           BRANCH_NAME="${META%%/*}"
