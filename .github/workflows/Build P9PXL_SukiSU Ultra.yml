@@ -441,7 +441,7 @@ jobs:
           rm -rf ./AnyKernel3/.git
           mkdir -p kernel_workspace/out/Final-Image-Find/
 
-          image_path=$(find out/ -path "*/bazel-out/*/bin/aosp/kernel_aarch64/Image" ! -path "*/runfiles/*" -print -quit)
+          image_path=$(find kernel_workspace/out/ -path "*/bazel-out/*/bin/aosp/kernel_aarch64/Image" ! -path "*/runfiles/*" -print -quit)
 
           if [ -n "$image_path" ] && [ -f "$image_path" ]; then
             echo "Image file finally located at: $image_path"
