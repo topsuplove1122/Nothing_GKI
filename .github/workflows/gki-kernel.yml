@@ -375,7 +375,7 @@ jobs:
           echo "Changing to configuration directory: $CONFIG..."
 
           echo "Creating bootimgs folder and copying images..."
-          cp ./$CONFIG/unpack_boot/boot.img ./P9PXL-Sukisu_$KSU_VERSION_-kpm-susfs-boot.img
+          cp ./$CONFIG/unpack_boot/boot.img ./P9PXL-Sukisu-$KSU_VERSION-kpm-susfs-boot.img
           cp ./$CONFIG/unpack_boot/Image ./
 
 
@@ -394,7 +394,7 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: boot-P9PXL-Sukisu_$KSU_VERSION
+          name: boot-P9PXL-Sukisu-$KSU_VERSION
           path: ./*.img
             
 
