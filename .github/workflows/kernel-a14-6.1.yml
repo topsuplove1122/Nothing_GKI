@@ -18,6 +18,10 @@ on:
         required: true
         type: string
         default: "F"
+      BRUNCH:
+        required: true
+        type: string
+        default: "android14-6.1-2025-06"
       kernelsu_variant:
         required: true
         type: string
@@ -81,3 +85,4 @@ jobs:
       kernelsu_branch: ${{ inputs.kernelsu_branch || 'Dev' }}
       kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
       BUILD_TIME: ${{ inputs.BUILD_TIME || 'F' }}
+      BRUNCH: ${{ inputs.BRUNCH || 'android14-6.1-2025-06' }}
