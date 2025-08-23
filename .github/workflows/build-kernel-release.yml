@@ -49,7 +49,7 @@ jobs:
       kernelsu_variant: ${{ inputs.kernelsu_variant }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
       kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
-      BUILD_TIME: ${{ inputs.BUILD_TIME }}
+      BUILD_TIME_EFFECTIVE: ${{ inputs.BUILD_TIME || 'F' }}
 
   
 
