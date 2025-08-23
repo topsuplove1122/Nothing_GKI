@@ -422,7 +422,7 @@ jobs:
           echo "Creating zip file: $ZIP_NAME..."
           mv ../Image ./Image
           zip -r "../$ZIP_NAME" ./*
-          rm ./Image
+          #rm ./Image
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
