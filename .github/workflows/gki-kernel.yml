@@ -112,6 +112,9 @@ jobs:
           $REPO --version
           $REPO --trace sync -c -j$(nproc --all) --no-tags --fail-fast
 
+          rm -rf aosp
+          git clone --depth=1 https://android.googlesource.com/kernel/common -b android14-6.1-2025-06 aosp
+
       - name: Delet abi_gki_protected_exports_* from common kernel source
         run: |
           cd "$CONFIG"
