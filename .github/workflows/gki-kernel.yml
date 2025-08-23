@@ -14,6 +14,10 @@ on:
         required: true
         type: string
         default: "F"
+      BRUNCH:
+        required: true
+        type: string
+        default: "android14-6.1-2025-06"
       android_version:
         required: true
         type: string
@@ -117,7 +121,7 @@ jobs:
           $REPO --trace sync -c -j$(nproc --all) --no-tags --fail-fast
 
           rm -rf aosp
-          git clone --depth=1 https://android.googlesource.com/kernel/common -b android14-6.1-2025-06 aosp
+          git clone --depth=1 https://android.googlesource.com/kernel/common -b ${{ inputs.BRUNCH }} aosp
 
       - name: Delet abi_gki_protected_exports_* from common kernel source
         run: |
