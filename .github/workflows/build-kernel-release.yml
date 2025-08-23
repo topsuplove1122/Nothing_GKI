@@ -17,6 +17,11 @@ on:
         description: "自定义构建时间 (输入F使用当前时间)"
         required: true
         default: "F"
+      BRUNCH:
+        type: string
+        description: "輸入內核brunch"
+        required: true
+        default: "android14-6.1-2025-06"
       kernelsu_variant:
         description: "Choose KernelSU"
         required: true
@@ -50,6 +55,7 @@ jobs:
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
       kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
       BUILD_TIME: ${{ inputs.BUILD_TIME || 'F' }}
+      BRUNCH: ${{ inputs.BRUNCH || 'android14-6.1-2025-06' }}
 
   
 
