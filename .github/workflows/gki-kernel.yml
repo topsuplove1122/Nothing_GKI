@@ -408,31 +408,32 @@ jobs:
           echo "Changing to configuration directory: $CONFIG..."
 
           echo "Creating bootimgs folder and copying images..."
-          cp ./$CONFIG/unpack_boot/boot.img ./P9PXL-Sukisu-$KSU_VERSION-kpm-susfs-boot.img
+          cp ./$CONFIG/unpack_boot/boot.img ./P9PXL-Sukisu-${{ env.KSU_VERSION }}-kpm-susfs-boot.img
           cp ./$CONFIG/unpack_boot/Image ./
 
 
       - name: Create ZIP Files for Different Formats
         run: |
           echo "Creating zip files for all formats..."
+          rm -rf ./AnyKernel3/.git
           cd ./AnyKernel3
 
           # Create and upload zip for each format
-          ZIP_NAME="P9PXL-Sukisu($KSU_VERSION)-kpm-susfs-AnyKernel3.zip"
-          echo "Creating zip file: $ZIP_NAME..."
+          # ZIP_NAME="P9PXL-Sukisu(${{ env.KSU_VERSION }})-kpm-susfs-AnyKernel3.zip"
+          # echo "Creating zip file: $ZIP_NAME..."
           mv ../Image ./Image
-          zip -r "../$ZIP_NAME" ./*
+          # zip -r "../$ZIP_NAME" ./*
           #rm ./Image
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: boot-P9PXL-Sukisu-$KSU_VERSION
+          name: boot-P9PXL-Sukisu-${{ env.KSU_VERSION }}
           path: ./*.img
             
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-P9PXL-Sukisu
+          name: AnyKernel3_P9PXL_Sukisu(${{ env.KSU_VERSION }})_kpm_susfs
           path: ./AnyKernel3/*
