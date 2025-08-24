@@ -507,8 +507,11 @@ jobs:
           mv new-boot.img boot.img
           cp boot.img ./kernel_workspace/out/SukiSU-boot/boot_SukiSU_${{ env.KSUVER }}.img
           rm -rf kernel_workspace/out/Final-Image-Find/Image
+          rm -rf ./AnyKernel3/Image
           mv kernel Image
-          mv Image kernel_workspace/out/Final-Image-Find/
+          cp Image kernel_workspace/out/Final-Image-Find/
+          mv Image ./AnyKernel3/
+          
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
