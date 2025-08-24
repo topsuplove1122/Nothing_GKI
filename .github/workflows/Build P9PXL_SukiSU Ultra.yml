@@ -443,6 +443,7 @@ jobs:
           ./build_caimito.sh --kernel_package=@//aosp
 
       - name: Make AnyKernel3
+        if: ${{ github.event.inputs.FAST_BUILD == 'false' }}
         run: |
           git clone https://github.com/Numbersf/AnyKernel3 --depth=1
           rm -rf ./AnyKernel3/.git
@@ -455,6 +456,35 @@ jobs:
             cp "$image_path" ./AnyKernel3/Image
             cp "$image_path" kernel_workspace/out/Final-Image-Find/Image
           fi
+
+      - name: Make AnyKernel3 Fast
+        if: ${{ github.event.inputs.FAST_BUILD == 'true' }}
+        run: |
+          git clone https://github.com/Numbersf/AnyKernel3 --depth=1
+          rm -rf ./AnyKernel3/.git
+          mkdir -p kernel_workspace/out/Final-Image-Find/
+          dir1=""
+          dir2=""
+          image_path=$(find "./kernel_workspace/common/out/" -name "Image" | head -n 1)
+          if [ -n "$image_path" ]; then
+            dir1=$(dirname "$image_path")/
+            echo "使用 make 编译的统一路径，成功找到 Image 文件"
+          else
+            image_path=$(find "./kernel_workspace/out/" -name "Image" | head -n 1)
+            if [ -n "$image_path" ]; then
+              dir2=$(dirname "$image_path")/
+              echo "使用官方脚本编译，成功找到 Image 文件"
+            else
+              echo "未找到 Image 文件，构建失败" >&2
+              exit 1
+            fi
+          fi
+          if [ -n "$image_path" ] && [ -f "$image_path" ]; then
+            echo "Image file finally located at: $image_path"
+            cp "$image_path" ./AnyKernel3/Image
+            cp "$image_path" kernel_workspace/out/Final-Image-Find/Image
+          fi
+          
           
 
       - name: Make boot for SukiSU
