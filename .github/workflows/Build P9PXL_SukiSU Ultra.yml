@@ -465,7 +465,7 @@ jobs:
           mkdir -p kernel_workspace/out/Final-Image-Find/
           dir1=""
           dir2=""
-          image_path=$(find "./kernel_workspace/common/out/" -name "Image" | head -n 1)
+          image_path=$(find "./kernel_workspace/aosp/out/" -name "Image" | head -n 1)
           if [ -n "$image_path" ]; then
             dir1=$(dirname "$image_path")/
             echo "使用 make 编译的统一路径，成功找到 Image 文件"
