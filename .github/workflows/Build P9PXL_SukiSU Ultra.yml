@@ -421,7 +421,7 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           export CC="ccache clang"
           sudo apt install -y libelf-dev ccache
-          cd kernel_workspace/common
+          cd kernel_workspace/aosp
           # 强制修改 SUBLEVEL，默认关闭
           # sed -i 's/^SUBLEVEL[[:space:]]*=[[:space:]]*.*/SUBLEVEL = 99/' Makefile
 
