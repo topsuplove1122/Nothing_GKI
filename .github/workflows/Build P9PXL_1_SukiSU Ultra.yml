@@ -239,11 +239,11 @@ jobs:
           git clone https://github.com/ShirkNeko/SukiSU_patch.git
           cd kernel_workspace
           echo "正在拉取susfs补丁"
-          cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch ./aosp/
+          cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch ./common/
           cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
           cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
 
-          cd ./aosp
+          cd ./common
           echo "正在打susfs补丁"
           patch -p1 < 50_add_susfs_in_gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch || true
           echo "susfs_patch完成"
