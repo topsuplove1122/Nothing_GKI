@@ -417,7 +417,7 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           export CC="ccache clang"
           sudo apt install -y libelf-dev ccache
-          cd kernel_workspace/aosp
+          cd kernel_workspace/common
           # 强制修改 SUBLEVEL，默认关闭
           # sed -i 's/^SUBLEVEL[[:space:]]*=[[:space:]]*.*/SUBLEVEL = 99/' Makefile
 
@@ -461,7 +461,7 @@ jobs:
           mkdir -p kernel_workspace/out/Final-Image-Find/
           dir1=""
           dir2=""
-          image_path=$(find "./kernel_workspace/aosp/out/" -name "Image" | head -n 1)
+          image_path=$(find "./kernel_workspace/common/out/" -name "Image" | head -n 1)
           if [ -n "$image_path" ]; then
             dir1=$(dirname "$image_path")/
             echo "使用 make 编译的统一路径，成功找到 Image 文件"
