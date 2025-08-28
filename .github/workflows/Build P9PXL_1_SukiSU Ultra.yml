@@ -170,18 +170,13 @@ jobs:
           mkdir kernel_workspace && cd kernel_workspace
           repo init -u https://android.googlesource.com/kernel/manifest -b common-android15-6.6-2025-08 --repo-rev=v2.16 --depth=1 --no-clone-bundle --no-tags
           repo sync -c -j$(nproc) --no-clone-bundle --no-tags --force-sync 
-          ls
-          mv common aosp          
-          ls
-          rm aosp/android/abi_gki_protected_exports_* || echo "No protected exports!"
-          rm aosp/android/abi_gki_protected_exports_* || echo "No protected exports!"
-          sed -i '/"protected_exports_list": "android\/abi_gki_protected_exports_aarch64",/d' aosp/BUILD.bazel
-          grep abi_gki_protected_exports_aarch64 aosp/BUILD.bazel || true
-          sed -i 's|base_kernel = "//common:kernel_aarch64"|base_kernel = "//aosp:kernel_aarch64"|' private/devices/google/caimito/BUILD.bazel
+          rm common/android/abi_gki_protected_exports_* || echo "No protected exports!"
+          sed -i '/"protected_exports_list": "android\/abi_gki_protected_exports_aarch64",/d' common/BUILD.bazel
+          grep abi_gki_protected_exports_aarch64 common/BUILD.bazel || true
 
       - name: Add SukiSU Ultra
         run: |
-          cd kernel_workspace/aosp
+          cd kernel_workspace/common
 
           META="${{ github.event.inputs.KSU_META }}"
           BRANCH_NAME="${META%%/*}"
@@ -245,8 +240,8 @@ jobs:
           cd kernel_workspace
           echo "正在拉取susfs补丁"
           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch ./aosp/
-          cp ../susfs4ksu/kernel_patches/fs/* ./aosp/fs/
-          cp ../susfs4ksu/kernel_patches/include/linux/* ./aosp/include/linux/
+          cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
+          cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
 
           cd ./aosp
           echo "正在打susfs补丁"
@@ -255,7 +250,7 @@ jobs:
 
       - name: Apply Hide Stuff Patches
         run: |
-          cd kernel_workspace/aosp
+          cd kernel_workspace/common
           cp ../../SukiSU_patch/69_hide_stuff.patch ./
           echo "正在打隐藏应用补丁"
           patch -p1 -F 3 < 69_hide_stuff.patch
@@ -264,7 +259,7 @@ jobs:
       - name: Apply VFS
         if: ${{ github.event.inputs.VFS == 'true' }}
         run: |
-          cd kernel_workspace/aosp
+          cd kernel_workspace/common
           cp ../../SukiSU_patch/hooks/syscall_hooks.patch ./
           echo "正在打vfs补丁"
           patch -p1 -F 3 < syscall_hooks.patch
@@ -273,7 +268,7 @@ jobs:
       - name: Apply Tracepoint Hook
         if: ${{ github.event.inputs.TRACEPOINT == 'true' }}
         run: |
-          cd kernel_workspace/aosp
+          cd kernel_workspace/common
           curl -LO "https://github.com/topsuplove1122/Build-tool/releases/download/NP3/sukisu_tracepoint_hooks.patch"
           echo "正在打Tracepoint Hook补丁"
           patch -p1 -F 3 < sukisu_tracepoint_hooks.patch
@@ -283,7 +278,7 @@ jobs:
       - name: Add Configuration Settings
         run: |
           cd kernel_workspace
-          CONFIG_FILE=./aosp/arch/arm64/configs/gki_defconfig
+          CONFIG_FILE=./common/arch/arm64/configs/gki_defconfig
           KERNEL_VERSION="${{ env.KERNEL_VERSION }}"
 
           # SukiSU Ultra配置
@@ -345,17 +340,17 @@ jobs:
           echo "CONFIG_IP_NF_TARGET_ECN=y" >> "$CONFIG_FILE"
 
           # 移除构建审查
-          sed -i 's/check_defconfig//' ./aosp/build.config.gki
+          sed -i 's/check_defconfig//' ./common/build.config.gki
 
           #移除maybe-dirty
           
-          sed -i '$s|echo "\$res"|echo "\$res-Reeky"|' ./aosp/scripts/setlocalversion
-          sed -i '/abi_gki_protected_exports_aarch64/d' ./aosp/BUILD.bazel
+          sed -i '$s|echo "\$res"|echo "\$res-Reeky"|' ./common/scripts/setlocalversion
+          sed -i '/abi_gki_protected_exports_aarch64/d' ./common/BUILD.bazel
           sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
           perl -pi -e 's/-maybe-dirty//g' ./build/kernel/kleaf/impl/stamp.bzl
-          sed -E -i '/^CONFIG_LOCALVERSION=/ s/(.*)"$/\1-Reeky"/' ./aosp/arch/arm64/configs/gki_defconfig
-          sed -i 's/-dirty//' ./aosp/scripts/setlocalversion
-          perl -pi -e 's/-dirty//' ./aosp/scripts/setlocalversion
+          sed -E -i '/^CONFIG_LOCALVERSION=/ s/(.*)"$/\1-Reeky"/' ./common/arch/arm64/configs/gki_defconfig
+          sed -i 's/-dirty//' ./common/scripts/setlocalversion
+          perl -pi -e 's/-dirty//' ./common/scripts/setlocalversion
 
       # Custom kernel build time, without adding #1 SMP PREEMPT 自定义内核构建时间，不要加入#1 SMP PREEMPT
       - name: Custom BUILD_TIME
@@ -372,7 +367,7 @@ jobs:
           echo "KBUILD_BUILD_TIMESTAMP=${DATESTR}" >> "$GITHUB_ENV"
           echo "KBUILD_BUILD_VERSION=1" >> "$GITHUB_ENV"
           cd kernel_workspace/
-          for f in aosp/scripts/mkcompile_h; do
+          for f in common/scripts/mkcompile_h; do
             if [ -f "$f" ]; then
               echo "Patching mkcompile_h with BUILD_TIME=$DATESTR"
               if grep -q 'UTS_VERSION=' "$f"; then
