@@ -170,7 +170,9 @@ jobs:
           mkdir kernel_workspace && cd kernel_workspace
           repo init -u https://android.googlesource.com/kernel/manifest -b common-android15-6.6-2025-08 --repo-rev=v2.16 --depth=1 --no-clone-bundle --no-tags
           repo sync -c -j$(nproc) --no-clone-bundle --no-tags --force-sync 
+          ls
           mv common aosp          
+          ls
           rm aosp/android/abi_gki_protected_exports_* || echo "No protected exports!"
           rm aosp/android/abi_gki_protected_exports_* || echo "No protected exports!"
           sed -i '/"protected_exports_list": "android\/abi_gki_protected_exports_aarch64",/d' aosp/BUILD.bazel
